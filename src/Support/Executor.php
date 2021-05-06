@@ -15,18 +15,6 @@ class Executor
     public $endedAt;
 
     /**
-     * Add command output piper.
-     *
-     * @param $command
-     * @param $ttyFile
-     * @return string
-     */
-    private function addPiper($command, $ttyFile)
-    {
-        return 'script -q ' . $ttyFile . ' -c "' . $command . '"';
-    }
-
-    /**
      * Execute one command.
      *
      * @param $command
@@ -43,7 +31,7 @@ class Executor
         Closure $callback = null,
         $timeout = null
     ) {
-        $process = new Process($this->addPiper($command, $ttyFile), $runDir);
+        $process = Process::fromShellCommandline($command, $runDir);
 
         $process->setTimeout($timeout);
 
@@ -52,6 +40,12 @@ class Executor
         $process->run($callback);
 
         $this->endedAt = Carbon::now();
+
+        $output = $process->getOutput();
+
+        if (strlen($output)) {
+            \File::append($ttyFile, $output);
+        }
 
         return $process;
     }
